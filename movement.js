@@ -14,7 +14,18 @@ var topYLeft = 0; //initial top left y coordinate of the rectangle
 var rectangles = new Array (10); //stores all x coordinates of rectangle in an array
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
+/**const socket = new WebSocket('ws://localhost:8080');
+// Connection opened
+socket.addEventListener('open', function (event) {
+    socket.send('Hello Server!');
+    console.log("Connection oppened");
+});
 
+// Listen for messages
+socket.addEventListener('message', function (event) {
+    console.log('Message from server ', event.data);
+});
+**/
 class Rectangle {
   constructor(xLeftValue, yLeftValue, length, width) {
     this.xLeftValue = xLeftValue;
@@ -26,21 +37,24 @@ class Rectangle {
 
   wouldCollideWithCircle(x, y, r) {
      if (y+r < this.yLeftValue || y-r > (this.yLeftValue + this.width)
-        || (x+r) < this.xLeftValue || (x-r) > (this.xLeftValue + this.length))
+        || (x+r) < this.xLeftValue || (x-r) > (this.xLeftValue + this.length)) {
         return false;
-      beep();
-      return true;
+     } else {
+        beep();
+        return true;
+      }
   }
 }
-ctx.fillStyle = "#FF0000";
+ctx.fillSxtyle = "#FF0000";
 
 for (let j = 0; j < 10; j++) {
   ctx.fillRect(topXLeft,topYLeft,rectLength,rectWidth);
-  topXLeft += xInc;
+
 
    rectangles[j] = new Rectangle(topXLeft, topYLeft, rectLength, rectWidth);
+   topXLeft += xInc;
 
-  if (topXLeft >=1024 ) {
+  if (topXLeft >=(1024 + xInc) ) {
     topXLeft = 0;
     topYLeft += 200;
     rectangles[j] = new Rectangle(topXLeft, topYLeft, rectLength, rectWidth);
