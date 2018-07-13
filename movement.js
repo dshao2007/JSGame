@@ -14,18 +14,23 @@ var topYLeft = 0; //initial top left y coordinate of the rectangle
 var rectangles = new Array (10); //stores all x coordinates of rectangle in an array
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-/**const socket = new WebSocket('ws://localhost:8080');
-// Connection opened
-socket.addEventListener('open', function (event) {
-    socket.send('Hello Server!');
-    console.log("Connection oppened");
-});
+const socket = new WebSocket('ws://127.0.0.1:5000/ws');
 
-// Listen for messages
-socket.addEventListener('message', function (event) {
-    console.log('Message from server ', event.data);
-});
-**/
+socket.onmessage = function (event) {
+  switch((JSON.parse(event.data)).name) {
+    case 'new':
+      //function to add new player
+    case 'delete':
+      //function to delete player
+    case 'move':
+      //function to move player by id
+    case 'getId':
+      //store id
+    default:
+      //nothing
+  }
+}
+
 class Rectangle {
   constructor(xLeftValue, yLeftValue, length, width) {
     this.xLeftValue = xLeftValue;
