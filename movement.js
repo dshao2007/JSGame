@@ -11,6 +11,7 @@ var playerStorage = new Map();
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 const socket = new WebSocket('ws://127.0.0.1:5000/ws');
+var playerCircle;
 
 socket.onmessage = function (event) {
   var ev = (JSON.parse(event.data))
@@ -22,8 +23,10 @@ socket.onmessage = function (event) {
       //function to delete player
     case 'move':
       //function to move player by id
+      playerStorage.get(ev.id).moveCircle(ev.centerX, ev.centerY);
     case 'getId':
       //store id
+      playerCircle = new Circle(centerX, centerY, radius, ev.uid);
     default:
       //nothing
   }
@@ -41,7 +44,8 @@ class Rectangle {
      if (y+r < this.yLeftValue || y-r > (this.yLeftValue + this.width)
         || (x+r) < this.xLeftValue || (x-r) > (this.xLeftValue + this.length)) {
         return false;
-     } else {
+     }
+     else {
         beep();
         return true;
       }
@@ -56,6 +60,36 @@ class Circle {
     ctx.stroke();
     console.log(playerStorage.get(this.id));
   }
+
+  moveCircle(newX, newY) {
+
+    ctx.clearRect(this.x - radius - 0.9, this.y - radius -0.9,
+    radius * 2 + 1.9, radius * 2 + 1.9);
+
+    ctx.beginPath();
+    ctx.arc(newX,newY,radius,0,2*Math.PI);
+    ctx.stroke();
+
+    this.x = newX;
+    this.y = newY;
+  }
+
+  changeId(uid) {
+    this.id = uid;
+  }
+  /*
+  circleCollision() {
+    for (var circle of myMap.values()) {
+      console.log(circle);
+    }
+    if ((Math.sqrt(((circle.x - this.x) (circle.x - this.x)) + (circle.y - this.y)(circle.y - this.y))) == (this.r + circle.radius)){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+  */
   constructor(x, y, r, id) {
     this.x = x;
     this.y = y;
@@ -68,7 +102,7 @@ class Circle {
 }
 
 ctx.fillSxtyle = "#FF0000";
-
+  playerCircle = new Circle(centerX, centerY, radius,"16");
 for (let j = 0; j < 10; j++) {
   ctx.fillRect(rectX,rectY,rectLength,rectWidth);
   rectangles[j] = new Rectangle(rectX, rectY, rectLength, rectWidth);
@@ -84,7 +118,9 @@ var centerX = 512;
 var centerY = 512;
 var radius = 25;
 
-var c = new Circle(centerX, centerY, radius, "6");
+
+
+//var bbb = new Circle(552, 552 , radius, "7");
 //c.createCircle();
 
 function beep() {
@@ -102,32 +138,58 @@ function collisionDetection () {
 }
 
 
+function circleCollision(){
+  if ((Math.sqrt(((centerX - 552) * (centerX - 552)) + (centerY - 552) * (centerY - 552))) <= (2 * radius)){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+
+//MOVE
 document.addEventListener('keydown', function(event) {
-    //left
   const displacement = 10;
     var prevX = centerX;
     var prevY = centerY;
 
   if (event.keyCode == 65) {
-    centerX -= displacement;
+      centerX -= displacement;
+      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
   } else if(event.keyCode == 87) {
-     //top
-    centerY -= displacement;
+      centerY -= displacement;
+      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
   } else if(event.keyCode == 68) {
-    //right
-    centerX += displacement;
+      centerX += displacement;
+      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
   } else if (event.keyCode == 83) {
-    centerY += displacement;
+      centerY += displacement;
+      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
   }
 
-  if (collisionDetection()) {
+  if (collisionDetection() || circleCollision ()) {
        centerX = prevX;
        centerY = prevY;
   } else {
-    ctx.clearRect(prevX - radius - 1, prevY - radius - 1,
-      radius * 2 + 2, radius * 2 + 2);
+    //clears user circle
+    ctx.clearRect(prevX - radius - 0.9, prevY - radius -0.9,
+    radius * 2 + 1.9, radius * 2 + 1.9);
+
+    //clears other rectangle
+    ctx.clearRect(552 - radius - 0.9, 552 - radius -0.9,
+    radius * 2 + 1.9, radius * 2 + 1.9);
+
+    //redraw other rectangle
+    ctx.beginPath();
+    ctx.arc(552,552,radius,0,2*Math.PI);
+    ctx.stroke();
+
+    //redraw current rectangle
     ctx.beginPath();
     ctx.arc(centerX,centerY,radius,0,2*Math.PI);
     ctx.stroke();
   }
+
+
+
 });
