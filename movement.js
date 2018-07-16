@@ -10,25 +10,37 @@ var rectangles = new Array (10); //stores all x and y coordinates of top left ve
 var playerStorage = new Map();
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-const socket = new WebSocket('ws://127.0.0.1:5000/ws');
+const socket = new WebSocket('ws://localhost:5000/ws');
 var playerCircle;
-
+var collidedX;
+var collidedY;
 socket.onmessage = function (event) {
-  var ev = (JSON.parse(event.data))
+  var ev = JSON.parse(event.data)
   switch(ev.name) {
     case 'new':
       //function to add new player
-      new Circle(parseFloat(ev.centerX), parseFloat(ev.centerY), parseFloat(ev.radius), ev.identifier);
+    console.log("new enemy circle added")
+    let oppCircle = new Circle(parseFloat(ev.centerX), parseFloat(ev.centerY), parseFloat(ev.radius), ev.uid);
+    playerStorage.set(ev.uid, oppCircle);
+    break;
     case 'delete':
       //function to delete player
+      break;
     case 'move':
       //function to move player by id
-      playerStorage.get(ev.id).moveCircle(ev.centerX, ev.centerY);
+      let tempcirc = playerStorage.get(ev.id)
+      console.log(ev.id)
+      tempcirc.moveCircle(ev.positionX, ev.positionY);
+      console.log("circle: " + playerStorage.get(ev.id));
+      break;
     case 'getId':
       //store id
+      console.log("case getId")
       playerCircle = new Circle(centerX, centerY, radius, ev.uid);
+      break;
     default:
       //nothing
+      break;
   }
 }
 
@@ -58,11 +70,10 @@ class Circle {
     ctx.beginPath();
     ctx.arc(this.x,this.y,this.r,0,2*Math.PI);
     ctx.stroke();
-    console.log(playerStorage.get(this.id));
   }
 
   moveCircle(newX, newY) {
-
+    console.log("moving circle")
     ctx.clearRect(this.x - radius - 0.9, this.y - radius -0.9,
     radius * 2 + 1.9, radius * 2 + 1.9);
 
@@ -95,14 +106,13 @@ class Circle {
     this.y = y;
     this.r = r;
     this.id = id;
-    playerStorage.set(id, this);
     this.createCircle();
   }
 
 }
 
 ctx.fillSxtyle = "#FF0000";
-  playerCircle = new Circle(centerX, centerY, radius,"16");
+  //playerCircle = new Circle(centerX, centerY, radius,"16");
 for (let j = 0; j < 10; j++) {
   ctx.fillRect(rectX,rectY,rectLength,rectWidth);
   rectangles[j] = new Rectangle(rectX, rectY, rectLength, rectWidth);
@@ -139,12 +149,14 @@ function collisionDetection () {
 
 
 function circleCollision(){
-  if ((Math.sqrt(((centerX - 552) * (centerX - 552)) + (centerY - 552) * (centerY - 552))) <= (2 * radius)){
-    return true;
+  for (let [k, circle] of playerStorage) {
+    if ((Math.sqrt(((centerX - circle.x) * (centerX - circle.x)) + (centerY - circle.y) * (centerY - circle.y))) <= (2 * radius)){
+      collidedX = circle.x;
+      collidedY = circle.y;
+      return true;
+    }
   }
-  else{
-    return false;
-  }
+  return false;
 }
 
 //MOVE
@@ -155,36 +167,36 @@ document.addEventListener('keydown', function(event) {
 
   if (event.keyCode == 65) {
       centerX -= displacement;
-      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
+
   } else if(event.keyCode == 87) {
       centerY -= displacement;
-      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
+
   } else if(event.keyCode == 68) {
       centerX += displacement;
-      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
+
   } else if (event.keyCode == 83) {
       centerY += displacement;
-      socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
   }
 
-  if (collisionDetection() || circleCollision ()) {
+if (collisionDetection() || circleCollision()) {
        centerX = prevX;
        centerY = prevY;
+       //clears other circle
+       ctx.clearRect(collidedX - radius - 0.9, collidedY - radius -0.9,
+       radius * 2 + 1.9, radius * 2 + 1.9);
+
+       //redraw other circle
+       ctx.beginPath();
+       ctx.arc(collidedX,collidedY,radius,0,2*Math.PI);
+       ctx.stroke();
   } else {
+    socket.send(JSON.stringify({name: "move", id: playerCircle.id, positionX: centerX, positionY: centerY}));
+
     //clears user circle
     ctx.clearRect(prevX - radius - 0.9, prevY - radius -0.9,
     radius * 2 + 1.9, radius * 2 + 1.9);
 
-    //clears other rectangle
-    ctx.clearRect(552 - radius - 0.9, 552 - radius -0.9,
-    radius * 2 + 1.9, radius * 2 + 1.9);
-
-    //redraw other rectangle
-    ctx.beginPath();
-    ctx.arc(552,552,radius,0,2*Math.PI);
-    ctx.stroke();
-
-    //redraw current rectangle
+    //redraw current circle
     ctx.beginPath();
     ctx.arc(centerX,centerY,radius,0,2*Math.PI);
     ctx.stroke();
