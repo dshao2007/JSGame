@@ -10,7 +10,7 @@ var rectangles = new Array (10); //stores all x and y coordinates of top left ve
 var playerStorage = new Map();
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-const socket = new WebSocket('ws://localhost:5000/ws');
+const socket = new WebSocket('ws://54.172.108.14:5000/ws');
 var playerCircle;
 var collidedX;
 var collidedY;
